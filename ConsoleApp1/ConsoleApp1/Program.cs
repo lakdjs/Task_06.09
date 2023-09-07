@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace ConsoleApp1
 {
@@ -16,16 +18,16 @@ namespace ConsoleApp1
     public class IntArrayList
     {
         private int[] bufArray;
-        private int size;
+        private int stored;
         private int bufSize;
         private readonly int defBufSize = 2;
         public int Count
         {
-            get { return size; }
+            get { return bufSize; }
         }
         public int Capacity
         {
-            get { return bufSize; }
+            get { return bufArray.Length; }
         }
         public int this[int index]
         {
@@ -35,42 +37,42 @@ namespace ConsoleApp1
         {
             bufArray = new int[defBufSize];
             bufSize = defBufSize;
+            stored = 0;
         }
         public IntArrayList(int Size)
         {
             bufArray = new int[Size];
             bufSize = Size;
+            stored = 0;
         }
         void PushBack(int value)
         {
-            if(bufArray.Length<size)
+            if(Capacity<=stored)
             {
-                bufArray[size-1] = value;
-                size++;
-            }
-            else
-            {
-                bufSize = bufSize * 2;
-                int[] buf = new int[bufSize];
-                foreach(int i in bufArray)
+
+                int[] newArr = new int[Capacity*2];
+                for (int i = 0; i < bufArray.Length; i++)
                 {
-                    buf[i] = bufArray[i];
+                    newArr[i] = bufArray[i];
                 }
-                bufArray[size-1]=value;
-                size++;
-                bufArray = buf;
+                bufArray = newArr;
             }
+            bufArray[stored - 1] = value;
+            stored++;
         }
         void PopBack()
         {
-            if(size!=0)
+            if(stored==0)
             {
-                bufArray[size] = 0;
+                return;
             }
+
+            bufArray[stored] = 0;
+            stored--;
         }
         bool TryInsert(int index, int value)
         {
-            if(index - 1 <= bufSize&&index >= 0)
+            if(index - 1 <= Count&&index >= 0)
             {
                 bufArray[index - 1] = value;   
                 return true;
@@ -82,7 +84,7 @@ namespace ConsoleApp1
         }
         bool TryErase(int index)
         {
-            if (index - 1 <= bufSize || index >= 0)
+            if (index - 1 <= Count || index >= 0)
             {
                 bufArray[index] = 0;
                 return true;
@@ -94,7 +96,7 @@ namespace ConsoleApp1
         }
         bool TryGetAt(int index, out int result)
         {
-            if (index - 1 <= bufSize || index >= 0)
+            if (index - 1 <= Count || index >= 0)
             {
                 result = bufArray[index];
                 return true;  
@@ -107,15 +109,34 @@ namespace ConsoleApp1
         }
         public void Clear()
         {
-            size = 0;
-            foreach (int i in bufArray)
-            {
-                bufArray[i] = 0;
-            }
+            stored = 0;
+            bufArray = new int[defBufSize];
         }
         public bool TryForceCapacity(int newCapacity)
         {
+            if (newCapacity < 0)
+            {
+                return false;
+            }
+            int[] newArr = new int[newCapacity];
+            for (int i = 0; i < Capacity; i++)
+            {
+                newArr[i] = bufArray[i];
+            }
+            bufArray = newArr;
 
+            return true;
+        }
+        public int Find(int value)
+        {
+            for (int i = 0; i < stored; i++)
+            {
+                if (bufArray[i] == value)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }
